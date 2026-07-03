@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger · Deduction Resolution</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --ink-soft:#1F2C4E;
+    --paper:#FAFAF8;
+    --paper-dim:#F1EFE7;
+    --line:#E2DECF;
+    --text:#1C211F;
+    --text-dim:#5B6360;
+    --gold:#9A6B1C;
+    --gold-fill:#C08829;
+    --gold-bg:#F5E6C6;
+    --green:#2E5F45;
+    --green-fill:#3C7A5A;
+    --green-bg:#DCEBE1;
+    --brick:#7E2F21;
+    --brick-fill:#A3402E;
+    --brick-bg:#F1DCD5;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    display:flex;
+    min-height:100vh;
+  }
+  .sidebar{
+    width:232px;
+    flex-shrink:0;
+    background:var(--ink);
+    color:#EDEBE2;
+    padding:28px 22px;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .wordmark{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:0.01em;
+    margin:0 0 2px;
+  }
+  .wordmark span{color:#B7C2DA;}
+  .tagline{
+    font-size:11px;
+    color:#8592B0;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin:0 0 40px;
+  }
+  .nav-group-label{
+    font-size:11px;
+    color:#7987AA;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin:0 0 10px;
+  }
+  .nav-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:9px 10px;
+    border-radius:var(--radius);
+    font-size:13.5px;
+    color:#D7DBE8;
+    cursor:pointer;
+    margin-bottom:2px;
+  }
+  .nav-item.active{background:var(--ink-soft); color:#fff;}
+  .nav-item:not(.active):hover{background:#1B2843;}
+  .nav-count{font-family:'IBM Plex Mono', monospace; font-size:11px; color:#8592B0;}
+  .sidebar-foot{
+    margin-top:48px;
+    padding-top:18px;
+    border-top:1px solid #26325A;
+    font-size:12px;
+    color:#7987AA;
+    line-height:1.6;
+  }
+ 
+  .main{flex:1; padding:36px 44px 60px; max-width:1080px;}
+  .page-head{margin-bottom:28px;}
+  .page-head h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:26px;
+    margin:0 0 6px;
+  }
+  .page-head p{margin:0; color:var(--text-dim); font-size:14px;}
+ 
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    margin-bottom:30px;
+  }
+  .stat-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 18px;
+  }
+  .stat-label{font-size:12px; color:var(--text-dim); margin:0 0 8px;}
+  .stat-value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:23px;
+    font-weight:500;
+    margin:0;
+  }
+  .stat-sub{font-size:12px; color:var(--text-dim); margin:4px 0 0;}
+  .stat-value.up{color:var(--green);}
+ 
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .tabs{display:flex; gap:6px;}
+  .tab{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    padding:7px 14px;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--text-dim);
+    cursor:pointer;
+  }
+  .tab.active{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .search{
+    font-size:13px;
+    padding:7px 12px;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    background:#fff;
+    width:200px;
+  }
+ 
+  .case-list{border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff;}
+  .case-row{
+    display:grid;
+    grid-template-columns:1fr 100px 130px 90px 20px;
+    align-items:center;
+    gap:14px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .case-row:last-child{border-bottom:none;}
+  .case-row:hover{background:var(--paper-dim);}
+  .case-main .customer{font-size:14px; font-weight:500; margin:0;}
+  .case-main .meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--text-dim);
+    margin:3px 0 0;
+  }
+  .confidence-label{font-size:10.5px; color:var(--text-dim); margin:0 0 4px;}
+  .confidence-track{height:4px; background:var(--paper-dim); border-radius:2px; overflow:hidden;}
+  .confidence-fill{height:100%;}
+  .status-pill{
+    font-size:11.5px;
+    padding:4px 10px;
+    border-radius:20px;
+    text-align:center;
+    white-space:nowrap;
+  }
+  .amount{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    font-weight:500;
+    text-align:right;
+  }
+  .chevron{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--text-dim);
+    transition:transform 0.15s ease;
+    font-size:12px;
+  }
+  .case-row.open .chevron{transform:rotate(180deg);}
+ 
+  .evidence{
+    display:none;
+    padding:4px 18px 22px 18px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper-dim);
+  }
+  .evidence.show{display:block;}
+  .evidence-label{font-size:12px; color:var(--text-dim); margin:14px 0 10px; text-transform:uppercase; letter-spacing:0.05em;}
+  .doc-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:14px;}
+  .doc-card{background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px 12px;}
+  .doc-card .k{font-size:10.5px; color:var(--text-dim); margin:0 0 3px;}
+  .doc-card .v{font-family:'IBM Plex Mono', monospace; font-size:12.5px; margin:0;}
+  .finding{font-size:13.5px; line-height:1.55; margin:0 0 16px; max-width:620px;}
+  .evidence-foot{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+  .owner{font-size:13px; color:var(--text-dim);}
+  .actions{display:flex; gap:8px;}
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:12.5px;
+    padding:7px 13px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+  }
+  .btn.primary{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .btn:hover{border-color:#C7C2AF;}
+ 
+  .rootcause{margin-top:38px;}
+  .rootcause h2{font-family:'Fraunces', serif; font-weight:500; font-size:18px; margin:0 0 4px;}
+  .rootcause p.sub{font-size:13px; color:var(--text-dim); margin:0 0 18px;}
+  .rc-row{display:grid; grid-template-columns:150px 1fr 70px 110px; align-items:center; gap:12px; padding:9px 0;}
+  .rc-label{font-size:13px;}
+  .rc-track{height:8px; background:var(--paper-dim); border-radius:4px; overflow:hidden;}
+  .rc-fill{height:100%;}
+  .rc-amount{font-family:'IBM Plex Mono', monospace; font-size:12.5px; text-align:right;}
+  .rc-owner{font-size:12px; color:var(--text-dim);}
+ 
+  @media (max-width: 860px){
+    .sidebar{display:none;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .case-row{grid-template-columns:1fr 80px 30px;}
+    .case-row .confidence, .case-row .amount{display:none;}
+    .doc-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+ 
+<div class="sidebar">
+  <p class="wordmark">Ledger <span>· DR</span></p>
+  <p class="tagline">Deduction resolution</p>
+ 
+  <p class="nav-group-label">Queue</p>
+  <div class="nav-item active"><span>All cases</span><span class="nav-count">14</span></div>
+  <div class="nav-item"><span>Needs review</span><span class="nav-count">5</span></div>
+  <div class="nav-item"><span>Escalated</span><span class="nav-count">3</span></div>
+  <div class="nav-item"><span>Auto-resolved</span><span class="nav-count">6</span></div>
+ 
+  <p class="nav-group-label" style="margin-top:26px;">Insight</p>
+  <div class="nav-item"><span>Root cause</span></div>
+  <div class="nav-item"><span>Customer history</span></div>
+ 
+  <div class="sidebar-foot">
+    Evidence pulled from EDI 820s, lockbox files, and portal exports. Updated 6 minutes ago.
+  </div>
+</div>
+ 
+<div class="main">
+  <div class="page-head">
+    <h1>Deduction queue</h1>
+    <p>Cases classified automatically. Low-confidence matches surface with evidence already attached.</p>
+  </div>
+ 
+  <div class="stats">
+    <div class="stat-card">
+      <p class="stat-label">Open deductions</p>
+      <p class="stat-value">$18,240</p>
+      <p class="stat-sub">14 cases</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Auto-resolved rate</p>
+      <p class="stat-value up">61%</p>
+      <p class="stat-sub">of volume this month</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Avg time to close</p>
+      <p class="stat-value">3.2d</p>
+      <p class="stat-sub">down from 9.1d</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Recovered this month</p>
+      <p class="stat-value">$9,640</p>
+      <p class="stat-sub">rebilled and collected</p>
+    </div>
+  </div>
+ 
+  <div class="toolbar">
+    <div class="tabs" id="tabs"></div>
+    <input class="search" type="text" placeholder="Search customer or case ID" id="search">
+  </div>
+ 
+  <div class="case-list" id="caseList"></div>
+ 
+  <div class="rootcause">
+    <h2>Root cause, this quarter</h2>
+    <p class="sub">Where deduction dollars are coming from, and who owns the fix.</p>
+    <div id="rootCauseList"></div>
+  </div>
+</div>
+ 
+<script>
+const cases = [
+  {id:'DR-2291', customer:'Meridian Foods', amount:4280, reason:'Trade promo discount', confidence:96, status:'resolved',
+   owner:'Closed automatically', po:'PO-77120', inv:'INV-88041', pod:'Delivered, no exceptions',
+   finding:'Promo addendum §2.1 covers this exact discount rate and date range. Deducted amount matches within $2. Closed without review.'},
+  {id:'DR-2288', customer:'Union Hardware Co.', amount:1150, reason:'Shortage claim', confidence:58, status:'review',
+   owner:'Unassigned', po:'PO-77004', inv:'INV-87990', pod:'Delivered, 1 line flagged short',
+   finding:'Warehouse ship count does not match the shortage claimed. Confidence is moderate because the POD carrier note is partially illegible. Needs a human check against the scanned bill of lading.'},
+  {id:'DR-2295', customer:'Brightline Logistics', amount:6740, reason:'Pricing discrepancy', confidence:41, status:'escalated',
+   owner:'Escalated to Sales · Priya N.', po:'PO-77188', inv:'INV-88102', pod:'Delivered, no exceptions',
+   finding:'Contract price is $0.40/unit lower than the invoiced price. No matching price amendment on file. Routed to Sales to confirm whether a verbal adjustment was made outside the system.'},
+  {id:'DR-2299', customer:'Halden Supply', amount:320, reason:'Damaged goods', confidence:89, status:'resolved',
+   owner:'Closed automatically', po:'PO-76950', inv:'INV-87888', pod:'Delivered with noted damage',
+   finding:'Photo evidence on file matches the damage described in the claim. Amount falls within standard damage write-off policy. Closed without review.'},
+  {id:'DR-2301', customer:'Corvus Retail Group', amount:2960, reason:'Unauthorized deduction', confidence:22, status:'review',
+   owner:'Unassigned', po:'PO-77201', inv:'INV-88115', pod:'Delivered, no exceptions',
+   finding:'No matching promo, contract clause, or prior approval found for this deduction. Low confidence reflects a genuinely ambiguous case rather than a system error. Flagged for direct outreach to the customer.'},
+  {id:'DR-2304', customer:'Meridian Foods', amount:875, reason:'Trade promo discount', confidence:94, status:'resolved',
+   owner:'Closed automatically', po:'PO-77205', inv:'INV-88120', pod:'Delivered, no exceptions',
+   finding:'Same promo addendum as DR-2291. Deducted amount matches within $1. Closed without review.'},
+  {id:'DR-2307', customer:'Palisade Grocers', amount:540, reason:'Shortage claim', confidence:76, status:'review',
+   owner:'Logistics · queued', po:'PO-77210', inv:'INV-88131', pod:'Delivered, 1 line flagged short',
+   finding:'Warehouse count is short by the exact quantity claimed. Confidence held back only because the claim was filed nine days after delivery, past the standard eight-day window.'}
+];
+ 
+const statusMeta = {
+  resolved:{label:'Auto-resolved', fill:'var(--green-fill)', bg:'var(--green-bg)', text:'var(--green)'},
+  review:{label:'Needs review', fill:'var(--gold-fill)', bg:'var(--gold-bg)', text:'var(--gold)'},
+  escalated:{label:'Escalated', fill:'var(--brick-fill)', bg:'var(--brick-bg)', text:'var(--brick)'}
+};
+ 
+const tabDefs = [
+  {key:'all', label:'All'},
+  {key:'review', label:'Needs review'},
+  {key:'escalated', label:'Escalated'},
+  {key:'resolved', label:'Auto-resolved'}
+];
+ 
+let filter = 'all';
+let query = '';
+let expanded = null;
+ 
+function renderTabs(){
+  document.getElementById('tabs').innerHTML = tabDefs.map(t =>
+    `<button class="tab ${filter===t.key?'active':''}" onclick="setFilter('${t.key}')">${t.label}</button>`
+  ).join('');
+}
+ 
+function setFilter(key){ filter = key; expanded = null; renderTabs(); renderList(); }
+function toggleCase(id){ expanded = expanded === id ? null : id; renderList(); }
+ 
+function money(n){ return '$' + n.toLocaleString(); }
+ 
+function renderList(){
+  const rows = cases.filter(c => {
+    const matchesFilter = filter === 'all' || c.status === filter;
+    const matchesQuery = !query || c.customer.toLowerCase().includes(query) || c.id.toLowerCase().includes(query);
+    return matchesFilter && matchesQuery;
+  });
+ 
+  const el = document.getElementById('caseList');
+  if(rows.length === 0){
+    el.innerHTML = '<div style="padding:32px; text-align:center; color:var(--text-dim); font-size:13.5px;">No cases match this view.</div>';
+    return;
+  }
+ 
+  el.innerHTML = rows.map(c => {
+    const m = statusMeta[c.status];
+    const isOpen = expanded === c.id;
+    return `
+      <div class="case-row ${isOpen?'open':''}" onclick="toggleCase('${c.id}')">
+        <div class="case-main">
+          <p class="customer">${c.customer}</p>
+          <p class="meta">${c.id} &middot; ${c.reason}</p>
+        </div>
+        <div class="confidence">
+          <p class="confidence-label">${c.confidence}% match</p>
+          <div class="confidence-track"><div class="confidence-fill" style="width:${c.confidence}%; background:${m.fill};"></div></div>
+        </div>
+        <div style="text-align:center;">
+          <span class="status-pill" style="background:${m.bg}; color:${m.text};">${m.label}</span>
+        </div>
+        <div class="amount">${money(c.amount)}</div>
+        <div class="chevron">&#9662;</div>
+      </div>
+      <div class="evidence ${isOpen?'show':''}">
+        <p class="evidence-label">Evidence pulled automatically</p>
+        <div class="doc-grid">
+          <div class="doc-card"><p class="k">Purchase order</p><p class="v">${c.po}</p></div>
+          <div class="doc-card"><p class="k">Invoice</p><p class="v">${c.inv}</p></div>
+          <div class="doc-card"><p class="k">Proof of delivery</p><p class="v">${c.pod}</p></div>
+        </div>
+        <p class="finding">${c.finding}</p>
+        <div class="evidence-foot">
+          <p class="owner">Owner: ${c.owner}</p>
+          <div class="actions">
+            <button class="btn" onclick="event.stopPropagation()">Rebill customer</button>
+            <button class="btn" onclick="event.stopPropagation()">Escalate</button>
+            <button class="btn primary" onclick="event.stopPropagation()">Approve write-off</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+ 
+document.getElementById('search').addEventListener('input', (e) => {
+  query = e.target.value.toLowerCase();
+  renderList();
+});
+ 
+const rootCauses = [
+  {label:'Trade promo discount', amount:6300, pct:35, owner:'Handled by system', fill:'var(--green-fill)'},
+  {label:'Shortage claim', amount:4900, pct:27, owner:'Logistics', fill:'var(--gold-fill)'},
+  {label:'Pricing discrepancy', amount:3800, pct:21, owner:'Sales', fill:'var(--brick-fill)'},
+  {label:'Damaged goods', amount:1600, pct:9, owner:'Logistics', fill:'var(--gold-fill)'},
+  {label:'Unauthorized', amount:1400, pct:8, owner:'AR direct outreach', fill:'var(--brick-fill)'}
+];
+ 
+document.getElementById('rootCauseList').innerHTML = rootCauses.map(r => `
+  <div class="rc-row">
+    <div class="rc-label">${r.label}</div>
+    <div class="rc-track"><div class="rc-fill" style="width:${r.pct}%; background:${r.fill};"></div></div>
+    <div class="rc-amount">${money(r.amount)}</div>
+    <div class="rc-owner">${r.owner}</div>
+  </div>
+`).join('');
+ 
+renderTabs();
+renderList();
+</script>
+ 
+</body>
+</html>
